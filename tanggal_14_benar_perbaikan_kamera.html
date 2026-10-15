@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="id" class="h-screen w-screen overflow-hidden">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Arena Adu Argumen - Game Edukasi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        html, body {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            font-family: 'Fredoka', sans-serif;
+            background-color: #2a3d32;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .font-handwriting { font-family: 'Caveat', cursive; }
+        .touch-btn {
+            transition: transform 0.05s ease, filter 0.05s ease;
+            cursor: pointer;
+        }
+        .touch-btn:active, .btn-pressed { transform: scale(0.92); filter: brightness(0.8); }
+
+        .panel-red { background: #ffe4e6; border-color: #fb7185; color: #881337; } 
+        .panel-blue { background: #dbeafe; border-color: #60a5fa; color: #1e3a8a; } 
+        .panel-yellow { background: #fef9c3; border-color: #facc15; color: #713f12; } 
+        .panel-green { background: #d1fae5; border-color: #34d399; color: #064e3b; } 
+        .panel-purple { background: #f3e8ff; border-color: #c084fc; color: #581c87; } 
+        .panel-cyan { background: #ffedd5; border-color: #fb923c; color: #7c2d12; } 
+        .panel-solo { background: #f8fafc; border-color: #94a3b8; color: #0f172a; } 
+
+        .corkboard-bg {
+            background-color: #C19A6B;
+            background-image: radial-gradient(#9e7b54 10%, transparent 11%), radial-gradient(#9e7b54 10%, transparent 11%);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+        }
+        .chalkboard-bg {
+            background-color: #2a4533;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+        }
+        .number-btn {
+            box-shadow: 2px 4px 6px rgba(0,0,0,0.2);
+            border-bottom: 3px solid rgba(0,0,0,0.15);
+            border-radius: 8px;
+        }
+        .number-btn.solved-correct { background: #10b981 !important; color: white !important; opacity: 0.9; pointer-events: none; }
+        .number-btn.solved-wrong { background: #ef4444 !important; color: white !important; opacity: 0.9; pointer-events: none; }
+        
+        .custom-scroll {
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #fbbf24 rgba(0,0,0,0.1);
+            scroll-behavior: smooth;
+        }
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); border-radius: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #fbbf24; border-radius: 6px; }
+        
+        .chalk-text { color: #f8f9fa; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body class="text-gray-800 h-screen w-screen overflow-hidden flex flex-col">
+
+    <!-- GATEWAY -->
+    <div id="gateway-screen" class="fixed inset-0 z-[120] bg-slate-900 flex items-center justify-center cursor-pointer" onclick="enterIntro()">
+        <div class="text-center animate-pulse flex flex-col items-center">
+            <span class="text-6xl mb-4">🔍</span>
+            <h1 class="text-4xl font-bold text-white mb-2">Arena Adu Argumen</h1>
+            <p class="text-yellow-300 font-bold bg-black/50 px-6 py-2 rounded-full mt-4">Ketuk layar untuk memulai aplikasi</p>
+        </div>
+    </div>
+
+    <!-- INTRO -->
+    <div id="intro-screen" class="hidden fixed inset-0 z-[110] bg-black bg-cover bg-center bg-no-repeat" style="background-image: url('arena argumen.png');">
+        <div class="absolute inset-0 bg-black/30 md:bg-gradient-to-r md:from-black/80 md:to-transparent"></div>
+        <div class="relative z-10 h-full w-full max-w-7xl mx-auto flex flex-col justify-end md:justify-center p-4 md:p-12 md:w-[60%]">
+            <div class="bg-white/95 backdrop-blur-md p-6 rounded-3xl border-4 border-amber-400 shadow-2xl relative">
+                <div class="absolute -top-8 -left-4 text-5xl">🕵️‍♀️</div>
+                <h2 class="text-2xl font-black text-slate-800 mb-3 border-b-2 border-slate-200 pb-2 flex items-center gap-2">
+                    <span class="text-amber-500">Pesan Guru Detektif</span> 
+                    <span id="audio-wave-icon" class="text-xl animate-pulse">🔊</span>
+                </h2>
+                <p class="text-base md:text-xl text-slate-700 leading-relaxed font-medium mb-6 italic" id="intro-text">
+                    "Selamat datang di dalam Arena Adu Argumentasi! Di arena ini, kecerdasan bukan hanya tentang siapa yang paling cepat menjawab, tetapi juga siapa yang mampu berpikir kritis, menemukan fakta, dan menyampaikan pendapat dengan alasan yang kuat. Setiap tim akan menghadapi tiga fase tantangan: Menyimak Informasi, Membaca atau Memirsa Informasi, dan Menyampaikan Argumentasi."
+                </p>
+                <button id="btn-skip-intro" data-action="skip-intro" class="w-full touch-btn bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-xl py-4 rounded-xl shadow-lg border-2 border-amber-200">
+                    Masuk ke Menu Utama ➡️
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MENU UTAMA -->
+    <div id="main-menu" class="hidden fixed inset-0 z-50 chalkboard-bg overflow-y-auto p-6 flex flex-col items-center justify-center">
+        <div class="max-w-4xl w-full relative">
+            <div class="text-center mb-10">
+                <div class="flex items-center justify-center gap-4 mb-2">
+                    <span class="text-6xl drop-shadow-md">🕵️‍♀️</span>
+                    <h1 class="text-6xl md:text-7xl font-extrabold chalk-text font-handwriting tracking-wide">Arena Adu Argumen</h1>
+                    <span class="text-5xl drop-shadow-md">🔍</span>
+                </div>
+                <h2 class="text-2xl md:text-3xl chalk-text font-handwriting opacity-90 border-b-2 border-white/20 pb-4 inline-block px-8">
+                    Cari Fakta • Temukan Opini • Bangun Argumen
+                </h2>
+            </div>
+            <div class="hidden md:flex justify-between absolute -top-8 w-full z-0 pointer-events-none opacity-80">
+                <div class="bg-yellow-200 w-32 h-32 rotate-[-10deg] shadow-lg p-2 font-handwriting text-xl text-center text-slate-800 border border-yellow-300">Fakta<br>(berdasarkan bukti)</div>
+                <div class="bg-pink-200 w-32 h-32 rotate-[5deg] shadow-lg p-2 font-handwriting text-xl text-center text-slate-800 border border-pink-300">Argumentasi<br>(alasan logis)</div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4 z-10 relative mt-8">
+                <button data-action="open-teacher" class="touch-btn bg-[#2563eb] text-white p-6 rounded-r-3xl border-l-8 border-[#1e3a8a] shadow-xl flex flex-col items-center gap-2 transform transition hover:-translate-y-2">
+                    <span class="text-4xl">👨‍🏫</span><span class="text-xl font-bold">1. Ruang Guru</span><span class="text-xs text-blue-200">Siapkan Soal & Kasus</span>
+                </button>
+                <button data-action="start-game" data-mode="solo" data-count="1" class="touch-btn bg-[#059669] text-white p-6 rounded-r-3xl border-l-8 border-[#064e3b] shadow-xl flex flex-col items-center gap-2 transform transition hover:-translate-y-2">
+                    <span class="text-4xl">👤</span><span class="text-xl font-bold">2. Mode Mandiri</span><span class="text-xs text-emerald-200">Mainkan Solo</span>
+                </button>
+                <div class="bg-[#d97706] text-white p-6 rounded-r-3xl border-l-8 border-[#92400e] shadow-xl flex flex-col items-center justify-center gap-2">
+                    <span class="text-4xl">👥</span><span class="text-xl font-bold">3. Mode Tim</span>
+                    <div class="flex gap-2 mt-2 w-full justify-center">
+                        <button data-action="start-game" data-mode="team" data-count="4" class="touch-btn bg-white/20 px-3 py-2 rounded-lg font-bold hover:bg-white/40 text-sm">4 Tim</button>
+                        <button data-action="start-game" data-mode="team" data-count="5" class="touch-btn bg-white/20 px-3 py-2 rounded-lg font-bold hover:bg-white/40 text-sm">5 Tim</button>
+                        <button data-action="start-game" data-mode="team" data-count="6" class="touch-btn bg-white/20 px-3 py-2 rounded-lg font-bold hover:bg-white/40 text-sm">6 Tim</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RUANG GURU -->
+    <div id="teacher-modal" class="hidden fixed inset-0 z-[150] bg-black/80 flex items-center justify-center p-4 overflow-y-auto backdrop-blur-sm">
+        <div class="bg-[#2a4533] border-4 border-amber-600 rounded-xl p-6 w-full max-w-6xl relative shadow-2xl my-auto">
+            <button data-action="close-teacher" class="absolute top-4 right-4 bg-red-600 w-10 h-10 rounded-full font-bold touch-btn text-xl z-10 text-white shadow">✕</button>
+            <h2 class="text-3xl font-bold text-amber-400 mb-6 border-b border-white/20 pb-3">👨‍🏫 Pengaturan Ruang Guru Detektif</h2>
+            <div class="grid md:grid-cols-3 gap-6 max-h-[70vh] overflow-y-auto pr-2 text-left custom-scroll">
+                <div class="space-y-4">
+                    <h3 class="text-xl font-bold text-white border-b border-white/20 pb-2">🎯 Fase 1: Menyimak</h3>
+                    <div class="bg-black/30 p-4 rounded-xl border border-white/10">
+                        <label class="block text-sm font-semibold text-slate-300 mb-1">Teks Pengantar Fase 1 (TTS):</label>
+                        <textarea id="audio-fase-1" rows="2" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600 text-white text-sm mb-2">Selamat datang di Fase 1. Tekan nomor pada papan untuk membuka soal, lalu tentukan apakah itu Fakta atau Opini.</textarea>
+                        <label class="block text-sm font-bold text-amber-300 mb-1">Unggah MP3 Audio Pengantar:</label>
+                        <input type="file" id="upload-mp3-fase1" accept="audio/*" class="w-full text-xs text-slate-300 bg-slate-900 border border-slate-600 rounded-lg p-1">
+                    </div>
+                    <div class="bg-black/30 p-4 rounded-xl border border-white/10 flex flex-col">
+                        <label class="block text-sm font-bold text-amber-300 mb-1">Soal Fase 1 (Soal = Fakta/Opini):</label>
+                        <textarea id="input-soal-fase1" rows="8" class="w-full flex-1 p-2 rounded-lg bg-slate-900 border border-slate-500 text-white text-xs whitespace-pre" spellcheck="false">
+Matahari terbit dari sebelah timur = Fakta
+Nasi goreng adalah makanan paling lezat di dunia = Opini
+Ibu kota negara Indonesia adalah Jakarta = Fakta
+Kucing adalah hewan peliharaan yang paling lucu = Opini
+Air mendidih pada suhu 100 derajat Celcius = Fakta
+Bermain game lebih menyenangkan daripada membaca buku = Opini
+Satu tahun terdiri dari 12 bulan = Fakta
+Matematika adalah pelajaran yang paling sulit = Opini
+Soekarno adalah Presiden pertama Indonesia = Fakta
+Cuaca hari ini sangat buruk dan tidak menyenangkan = Opini</textarea>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <h3 class="text-xl font-bold text-white border-b border-white/20 pb-2">🚀 Fase 2: Membaca/Memirsa</h3>
+                    <div class="bg-black/30 p-4 rounded-xl border border-white/10 space-y-2">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-300 mb-1">Teks Pengantar Fase 2 (TTS):</label>
+                            <textarea id="audio-fase-2" rows="2" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600 text-white text-xs">Selamat! Kalian berhasil masuk ke Fase 2. Silakan cermati cerita atau tayangan video berikut sebelum menjawab.</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-green-300 mb-1">Teks Bacaan (Cerita):</label>
+                            <textarea id="cerita-fase-2" rows="3" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600 text-white text-xs">Pada hari Minggu, Budi dan teman-temannya pergi ke taman kota. Di sana terdapat banyak pohon rindang dan bunga yang berwarna-warni. Budi melihat seekor burung merpati sedang terbang. Menurut Budi, taman ini adalah tempat paling indah di dunia. Namun, Andi merasa taman ini terlalu ramai hari ini.</textarea>
+                        </div>
+                        <div class="bg-slate-900 p-2 rounded-lg border border-slate-500">
+                            <label class="block text-xs font-bold text-pink-300 mb-1">Link YouTube Fase 2:</label>
+                            <input type="text" id="youtube-link-fase2" class="w-full p-1.5 rounded bg-black border border-slate-600 text-white text-xs mb-1" placeholder="https://www.youtube.com/watch?v=...">
+                            <label class="block text-xs font-bold text-pink-300 mb-1">Upload MP4 Video:</label>
+                            <input type="file" id="upload-video-fase2" accept="video/*" class="w-full text-xs text-slate-300 bg-black border border-slate-600 rounded p-1">
+                        </div>
+                    </div>
+                    <div class="bg-black/30 p-4 rounded-xl border border-white/10">
+                        <label class="block text-sm font-bold text-amber-300 mb-1">Soal Fase 2 (Pilihan Ganda):</label>
+                        <textarea id="input-soal-fase2" rows="6" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-500 text-white text-xs whitespace-pre" spellcheck="false">
+Perhatikan dua pendapat berikut. (1) Sekolah sebaiknya mendorong siswa membawa tumbler karena dapat mengurangi penggunaan botol sekali pakai. (2) Semua siswa yang tidak membawa tumbler pasti malas menjaga lingkungan. Penilaian yang tepat adalah... = Kedua pendapat sama kuat karena sama-sama membahas tumbler. | Kededuanya merupakan fakta yang telah terbukti. | Pendapat pertama lebih kuat karena memiliki alasan yang relevan dan pendapat kedua menghakimi semua siswa. | Pendapat kedua lebih kuat karena menggunakan kata semua. = Pendapat pertama lebih kuat karena memiliki alasan yang relevan dan pendapat kedua menghakimi semua siswa.
+Jika sekolah ingin membuktikan bahwa program membawa tumbler membantu mengurangi sampah plastik, data apa yang paling tepat dikumpulkan? = Pendapat satu siswa bahwa tumbler terlihat bagus. | Jumlah siswa yang menyukai minuman dingin. | Warna tumbler yang paling disukai siswa. | Jumlah sampah botol plastik sebelum dan sesudah program dijalankan. = Jumlah sampah botol plastik sebelum dan sesudah program dijalankan.
+Seorang siswa berkata, 'Aku tidak perlu menaati aturan membawa tumbler kalau tidak ada guru yang melihat.' Tanggapan yang paling kuat adalah... = Tidak setuju, karena semua siswa yang tidak membawa tumbler pasti dihukum. | Benar, karena aturan hanya berlaku saat guru mengawasi. | Benar, karena setiap siswa bebas menentukan aturan sendiri. | Tidak setuju, karena aturan sebaiknya ditaati meskipun tidak diawasi agar kebiasaan baik terbentuk. = Tidak setuju, karena aturan sebaiknya ditaati meskipun tidak diawasi agar kebiasaan baik terbentuk.
+Kapan Budi dan teman-temannya pergi ke taman? = Senin | Minggu | Sabtu | Jumat = Minggu
+Hewan apa yang dilihat oleh Budi terbang? = Burung Hantu | Burung Elang | Burung Merpati | Burung Gagak = Burung Merpati
+Bagaimana pendapat Andi tentang taman tersebut? = Sangat indah | Terlalu sepi | Terlalu ramai | Biasa saja = Terlalu ramai
+Siapa yang merasa taman itu tempat terindah? = Andi | Budi | Ayah | Ibu = Budi
+Pernyataan Budi tentang taman terindah termasuk kalimat? = Fakta | Opini | Perintah | Tanya = Opini
+Pohon apa yang banyak terdapat di taman? = Pohon Rindang | Pohon Beringin | Pohon Mangga | Pohon Kelapa = Pohon Rindang
+Ke mana mereka pergi? = Kebun Binatang | Taman Kota | Pantai | Gunung = Taman Kota</textarea>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <h3 class="text-xl font-bold text-white border-b border-white/20 pb-2">🗣️ Fase 3: Argumentasi</h3>
+                    <div class="bg-black/30 p-3 rounded-xl border border-white/10 space-y-3">
+                        <label class="block text-sm font-semibold text-slate-300">Teks Pengantar Fase 3 (TTS):</label>
+                        <textarea id="audio-fase-3" rows="2" class="w-full p-2 rounded-lg bg-slate-900 border border-slate-600 text-white text-xs mb-2">Selamat datang di Fase 3: Menyampaikan Argumentasi. Putar undian kasus, lalu kemukakan argumen terbaik tim kalian!</textarea>
+                        <div id="kasus-inputs-container" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+            <button data-action="save-teacher" class="mt-6 w-full py-4 rounded-xl bg-amber-500 hover:bg-amber-400 font-bold text-xl touch-btn shadow-lg text-slate-900 border-2 border-amber-200">Simpan Pengaturan</button>
+        </div>
+    </div>
+
+    <!-- MODAL FASE 3 ZOOM KASUS -->
+    <div id="zoom-img-modal" class="hidden fixed inset-0 z-[150] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-md">
+        <div class="relative max-w-6xl max-h-[90vh] w-full flex flex-col items-center justify-center">
+            <button data-action="close-zoom-img" class="absolute -top-4 -right-4 bg-red-600 hover:bg-red-500 w-12 h-12 rounded-full font-black text-2xl text-white border-2 border-white z-50 touch-btn shadow-lg">✕</button>
+            <img id="zoomed-kasus-img" src="" class="max-h-[85vh] max-w-full object-contain rounded-2xl border-4 border-amber-500 shadow-2xl">
+        </div>
+    </div>
+
+    <!-- MODAL FASE 3 PEREKAM JAWABAN (REVISI KAMERA) -->
+    <div id="record-modal" class="hidden fixed inset-0 z-[150] bg-black/90 flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-slate-900 border-4 border-red-500 rounded-2xl p-6 w-full max-w-2xl flex flex-col items-center relative shadow-[0_0_30px_rgba(239,68,68,0.5)]">
+            <button data-action="close-record" class="absolute top-4 right-4 bg-slate-700 hover:bg-slate-600 w-10 h-10 rounded-full font-bold touch-btn text-xl text-white">✕</button>
+            <div class="text-center mb-3">
+                <span id="record-team-title" class="text-lg font-black text-yellow-400 uppercase tracking-wider">🎥 REKAM JAWABAN TIM</span>
+                <div id="record-timer-display" class="text-4xl font-black text-red-500 tracking-widest tabular-nums animate-pulse mt-1">01:00</div>
+            </div>
+            
+            <!-- Tambahan pesan peringatan file lokal -->
+            <div id="local-file-warning" class="hidden w-full bg-red-900/50 text-red-200 p-3 rounded-lg border border-red-500 mb-3 text-sm text-center font-bold">
+                ⚠️ Browser memblokir kamera karena game tidak dijalankan lewat server HTTPS/Localhost.
+            </div>
+
+            <div class="w-full aspect-video bg-black rounded-xl overflow-hidden border-2 border-slate-700 relative flex items-center justify-center">
+                <video id="camera-preview" autoplay muted playsinline class="w-full h-full object-cover"></video>
+                <div id="recording-badge" class="hidden absolute top-3 left-3 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 animate-pulse">
+                    <span class="w-3 h-3 bg-white rounded-full"></span> REC
+                </div>
+            </div>
+            <button id="btn-start-record" data-action="start-recording" class="mt-4 w-full py-3 bg-gradient-to-r from-red-600 to-rose-600 text-white font-black text-xl rounded-xl touch-btn shadow-lg border-2 border-red-300">
+                🔴 MULAI REKAM (60 DETIK)
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL FASE 3 PUTAR REKAMAN -->
+    <div id="playback-modal" class="hidden fixed inset-0 z-[150] bg-black/95 flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-slate-900 border-4 border-amber-500 rounded-2xl p-6 w-full max-w-3xl flex flex-col items-center relative">
+            <button data-action="close-playback" class="absolute top-4 right-4 bg-red-600 hover:bg-red-500 w-10 h-10 rounded-full font-bold touch-btn text-xl text-white">✕</button>
+            <h3 id="playback-team-title" class="text-2xl font-black text-yellow-400 mb-4 uppercase">▶️ PUTAR REKAMAN JAWABAN</h3>
+            <div class="w-full aspect-video bg-black rounded-xl overflow-hidden border-2 border-slate-700">
+                <video id="playback-player" controls playsinline class="w-full h-full object-contain"></video>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FASE 3 PENILAIAN -->
+    <div id="rubric-modal" class="hidden fixed inset-0 z-[150] bg-black/85 flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-[#2a4533] border-4 border-amber-400 rounded-2xl p-6 w-full max-w-xl relative shadow-2xl">
+            <button data-action="close-rubric" class="absolute top-4 right-4 bg-red-600 w-10 h-10 rounded-full font-bold touch-btn text-xl text-white">✕</button>
+            <h3 class="text-2xl font-black text-amber-400 mb-1 text-center uppercase font-handwriting">📝 Penilaian Argumen</h3>
+            <p id="rubric-team-name" class="text-center font-bold text-white mb-4 text-lg">TIM 1</p>
+            <div class="space-y-3 bg-black/20 p-4 rounded-xl border border-white/20">
+                <div class="flex items-center justify-between gap-3 bg-white/10 p-2.5 rounded-lg border border-white/10">
+                    <div><div class="font-bold text-sm text-yellow-300">a. Pendapat</div><div class="text-[11px] text-slate-300">Kejelasan pernyataan argumen</div></div>
+                    <input type="number" id="score-pendapat" class="w-20 p-2 bg-slate-900 border-2 border-yellow-500 rounded text-center font-black text-xl text-yellow-400" min="0" max="100" placeholder="0">
+                </div>
+                <div class="flex items-center justify-between gap-3 bg-white/10 p-2.5 rounded-lg border border-white/10">
+                    <div><div class="font-bold text-sm text-blue-300">b. Alasan</div><div class="text-[11px] text-slate-300">Kesesuaian logika & penalaran</div></div>
+                    <input type="number" id="score-alasan" class="w-20 p-2 bg-slate-900 border-2 border-blue-500 rounded text-center font-black text-xl text-blue-400" min="0" max="100" placeholder="0">
+                </div>
+                <div class="flex items-center justify-between gap-3 bg-white/10 p-2.5 rounded-lg border border-white/10">
+                    <div><div class="font-bold text-sm text-emerald-300">c. Data</div><div class="text-[11px] text-slate-300">Bukti pendukung yang kuat</div></div>
+                    <input type="number" id="score-data" class="w-20 p-2 bg-slate-900 border-2 border-emerald-500 rounded text-center font-black text-xl text-emerald-400" min="0" max="100" placeholder="0">
+                </div>
+                <div class="flex items-center justify-between gap-3 bg-white/10 p-2.5 rounded-lg border border-white/10">
+                    <div><div class="font-bold text-sm text-pink-300">d. Kesimpulan</div><div class="text-[11px] text-slate-300">Penutup yang meyakinkan</div></div>
+                    <input type="number" id="score-kesimpulan" class="w-20 p-2 bg-slate-900 border-2 border-pink-500 rounded text-center font-black text-xl text-pink-400" min="0" max="100" placeholder="0">
+                </div>
+            </div>
+            <button data-action="save-rubric" class="mt-5 w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-900 font-black text-xl rounded-xl touch-btn shadow-lg border border-amber-200">💾 SIMPAN SKOR</button>
+        </div>
+    </div>
+
+    <!-- MEDIA FASE 2 -->
+    <div id="story-modal" class="hidden fixed inset-0 z-[150] bg-black/90 flex items-center justify-center p-6 backdrop-blur-md">
+        <div class="bg-[#fef9c3] border-4 border-amber-600 rounded-3xl p-8 w-full max-w-3xl relative shadow-2xl">
+            <button data-action="close-story" class="absolute top-4 right-4 bg-red-600 w-12 h-12 rounded-full font-black text-xl touch-btn shadow-lg text-white border-2 border-red-300">✕</button>
+            <h2 class="text-4xl font-black text-amber-800 mb-6 border-b-2 border-amber-800/20 pb-4 font-handwriting">📖 Berkas Kasus Hari Ini</h2>
+            <div id="story-content" class="text-xl md:text-2xl leading-relaxed text-slate-800 bg-white/50 p-6 rounded-xl border border-amber-300 shadow-inner max-h-[50vh] overflow-y-auto custom-scroll font-medium"></div>
+            <button data-action="close-story" class="mt-8 w-full py-4 rounded-xl bg-amber-600 text-white font-bold text-2xl touch-btn shadow-lg">Saya Sudah Membaca</button>
+        </div>
+    </div>
+
+    <div id="video-modal" class="hidden fixed inset-0 z-[150] bg-black/95 flex items-center justify-center p-6 backdrop-blur-md">
+        <div class="bg-[#2a4533] border-4 border-amber-400 rounded-2xl p-6 w-full max-w-5xl relative shadow-2xl">
+            <button data-action="close-video" class="absolute -top-4 -right-4 bg-red-600 w-12 h-12 rounded-full font-black text-xl touch-btn shadow text-white border-2 border-white z-50">✕</button>
+            <h2 class="text-3xl font-black text-amber-400 mb-4 border-b-2 border-amber-500/50 pb-2 text-center font-handwriting">🎥 Bukti Tayangan Video</h2>
+            <div id="video-content" class="w-full aspect-video bg-black rounded-xl overflow-hidden flex items-center justify-center border-2 border-slate-600 shadow-inner"></div>
+        </div>
+    </div>
+
+    <!-- SKOR SEMENTARA & AKHIR -->
+    <div id="interim-score-screen" class="hidden fixed inset-0 z-[140] chalkboard-bg flex flex-col items-center justify-center p-6 overflow-y-auto backdrop-blur-lg">
+        <h1 id="interim-title" class="text-5xl md:text-7xl font-extrabold text-white mb-2 text-center font-handwriting tracking-wide">Papan Peringkat Sementara</h1>
+        <p id="interim-subtitle" class="text-xl md:text-2xl text-amber-300 mb-8 text-center font-bold">Misi Fase Selesai! Persiapkan tim kalian untuk tantangan selanjutnya!</p>
+        <div id="interim-leaderboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10 w-full max-w-5xl custom-scroll max-h-[50vh] overflow-y-auto"></div>
+        <button id="btn-start-next-phase" data-action="start-next-phase" class="touch-btn px-10 py-5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold text-2xl rounded-2xl shadow-lg border-2 border-amber-200">
+            🚀 MULAI FASE BERIKUTNYA
+        </button>
+    </div>
+
+    <div id="final-score-screen" class="hidden fixed inset-0 z-[140] chalkboard-bg flex flex-col items-center justify-center p-4 md:p-6 overflow-y-auto backdrop-blur-xl">
+        <div class="text-center mb-6">
+            <span class="text-5xl md:text-6xl animate-bounce inline-block mb-2">🏆</span>
+            <h1 class="text-4xl md:text-6xl font-black text-amber-400 font-handwriting tracking-wider">HASIL AKHIR PENYELIDIKAN</h1>
+            <p class="text-lg md:text-2xl text-white font-bold mt-1">Total Skor Argumen & Fakta</p>
+        </div>
+        <div id="final-leaderboard" class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 custom-scroll max-h-[60vh] overflow-y-auto p-2"></div>
+        <div class="w-full max-w-4xl bg-white/10 border-2 border-white/30 backdrop-blur-sm rounded-xl p-4 mb-6 shadow-2xl overflow-x-auto">
+            <h3 class="text-center text-lg font-bold text-amber-300 mb-3 tracking-wide">📊 Laporan Akhir Detektif</h3>
+            <table class="w-full text-left text-sm text-slate-200 border-collapse">
+                <thead><tr class="bg-black/30 border-b border-white/20 text-white font-black text-center"><th class="p-2">Peringkat</th><th class="p-2 text-left">Nama Tim</th><th class="p-2">Total Poin Akhir</th></tr></thead>
+                <tbody id="final-summary-table-body"></tbody>
+            </table>
+        </div>
+        <div class="flex gap-4">
+            <button data-action="go-home" class="touch-btn px-8 py-4 bg-slate-200 hover:bg-white text-slate-900 font-black text-xl rounded-2xl shadow-xl border-2 border-slate-400 flex items-center gap-2">🏠 KEMBALI KE RUANG KELAS</button>
+        </div>
+    </div>
+
+    <!-- AREA GAME -->
+    <div id="game-screen" class="hidden h-screen w-screen overflow-hidden flex flex-col p-2 md:p-3 relative box-border corkboard-bg">
+        <header class="shrink-0 p-2 flex justify-between items-center z-10 bg-[#2a4533] shadow-md border-2 border-[#1c3021] rounded-lg mb-2 flex-wrap gap-2 text-white">
+            <div class="flex gap-2 items-center flex-wrap">
+                <button data-action="go-home" class="touch-btn bg-red-600 hover:bg-red-500 px-3 py-1.5 rounded text-sm font-bold shadow border border-red-800">🏠 Menu</button>
+                <button data-action="play-phase-audio" class="touch-btn bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded text-sm font-bold shadow border border-amber-800 flex items-center gap-1">🔊 Pengantar</button>
+                <button id="btn-show-story" data-action="show-story" class="hidden touch-btn bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded text-sm font-bold shadow border border-emerald-800 flex items-center gap-1">📖 Berkas</button>
+                <button id="btn-show-video" data-action="show-video" class="hidden touch-btn bg-[#2563eb] hover:bg-blue-500 px-3 py-1.5 rounded text-sm font-bold shadow border border-blue-800 flex items-center gap-1">🎥 Tayangan</button>
+            </div>
+            <div class="flex flex-col items-center bg-black/40 px-4 py-0.5 rounded border border-white/20 shadow-inner shrink-0">
+                <span class="text-amber-300 text-[9px] font-bold uppercase tracking-widest">Sisa Waktu</span>
+                <div id="global-timer" class="text-xl md:text-2xl font-black text-white tabular-nums">10:00</div>
+            </div>
+            <div class="flex gap-2 items-center">
+                <button id="btn-next-phase" data-action="show-interim" class="touch-btn bg-amber-400 hover:bg-amber-300 text-slate-900 border border-amber-600 px-3 py-1.5 rounded font-bold text-sm shadow animate-pulse">Lanjut Fase ➡️</button>
+                <div id="mode-indicator" class="hidden md:flex bg-slate-800 border border-slate-600 px-3 py-1 rounded text-xs font-bold shadow items-center gap-1 text-white">👥 Mode Tim</div>
+            </div>
+        </header>
+
+        <div class="shrink-0 w-full flex items-center justify-center mb-3 z-10 px-2">
+            <div class="flex items-center justify-center gap-3 relative bg-[#fef9c3] border-2 border-[#facc15] px-6 md:px-12 py-1.5 shadow-md rounded transform -rotate-1">
+                <div class="w-3 h-3 rounded-full bg-red-600 absolute top-2 left-2 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]"></div>
+                <div class="w-3 h-3 rounded-full bg-red-600 absolute top-2 right-2 shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)]"></div>
+                <h2 id="phase-title" class="text-lg md:text-2xl font-black text-[#713f12] font-handwriting uppercase tracking-wider">FASE 1: MENYIMAK INFORMASI</h2>
+                <button data-action="play-custom-mp3" id="btn-simak-audio" class="touch-btn flex items-center justify-center shrink-0 ml-2">
+                    <div class="bg-amber-500 border border-amber-700 rounded-full w-8 h-8 flex items-center justify-center text-sm shadow">🔊</div>
+                </button>
+            </div>
+        </div>
+
+        <div id="game-grid" class="flex-1 min-h-0 w-full max-w-[1500px] mx-auto z-10 p-1 box-border"></div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            initAudio(); const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination); const now = audioCtx.currentTime;
+
+            if(type === 'correct') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2); osc.frequency.setValueAtTime(1046.50, now + 0.3);
+                gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.4, now + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6); osc.start(now); osc.stop(now + 0.6);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(250, now); osc.frequency.exponentialRampToValueAtTime(120, now + 0.4);
+                gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.3, now + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4); osc.start(now); osc.stop(now + 0.4);
+            } else if (type === 'tick') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(800, now); gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05); osc.start(now); osc.stop(now + 0.05);
+            } else if (type === 'beep') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15); osc.start(now); osc.stop(now + 0.15);
+            }
+        }
+
+        function playTeacherIntro() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const text = "Selamat datang di dalam Arena Adu Argumentasi! Di arena ini, kecerdasan bukan hanya tentang siapa yang paling cepat menjawab, tetapi juga siapa yang mampu berpikir kritis, menemukan fakta, dan menyampaikan pendapat dengan alasan yang kuat. Setiap tim akan menghadapi tiga fase tantangan: Menyimak Informasi, Membaca atau Memirsa Informasi, dan Menyampaikan Argumentasi.";
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'id-ID'; utterance.pitch = 1.25; utterance.rate = 0.95; 
+                let voices = window.speechSynthesis.getVoices();
+                const setVoice = () => {
+                    voices = window.speechSynthesis.getVoices();
+                    let femaleVoice = voices.find(v => v.lang === 'id-ID' && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('perempuan')));
+                    if (!femaleVoice) femaleVoice = voices.find(v => v.lang === 'id-ID'); 
+                    if (femaleVoice) utterance.voice = femaleVoice;
+                    window.speechSynthesis.speak(utterance);
+                };
+                if (voices.length !== 0) setVoice(); else window.speechSynthesis.onvoiceschanged = setVoice;
+            }
+        }
+
+        function enterIntro() {
+            initAudio(); document.getElementById('gateway-screen').classList.add('hidden');
+            document.getElementById('intro-screen').classList.remove('hidden'); playTeacherIntro();
+        }
+
+        function playTTS(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'id-ID'; utterance.pitch = 1.25; utterance.rate = 0.95;
+                let voices = window.speechSynthesis.getVoices();
+                let femaleVoice = voices.find(v => v.lang === 'id-ID' && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('perempuan')));
+                if (!femaleVoice) femaleVoice = voices.find(v => v.lang === 'id-ID');
+                if (femaleVoice) utterance.voice = femaleVoice; window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        let customMp3AudioFase1 = null; let customVideoFileFase2 = null;
+        let bankSoalFase1 = [], bankSoalFase2 = [];
+        let bankKasusFase3 = [
+            { id: 1, title: "KASUS 1", displayMode: "text", text: "Apakah penggunaan botol minuman sekali pakai di kantin sekolah harus dilarang sepenuhnya demi menjaga lingkungan?", img: null },
+            { id: 2, title: "KASUS 2", displayMode: "text", text: "Setujukah kamu jika siswa yang ketahuan membuang sampah sembarangan diberikan sanksi tugas membersihkan seluruh area sekolah?", img: null },
+            { id: 3, title: "KASUS 3", displayMode: "text", text: "Haruskah sekolah memberikan penghargaan khusus berupa poin tambahan bagi siswa yang selalu membawa tumbler sendiri?", img: null },
+            { id: 4, title: "KASUS 4", displayMode: "text", text: "Apakah aturan memilah sampah organik dan anorganik wajib menjadi kriteria utama penilaian kebersihan kelas harian?", img: null },
+            { id: 5, title: "KASUS 5", displayMode: "text", text: "Setujukah kamu jika sekolah menerapkan program Zero Plastic Day (Hari Tanpa Plastik) di seluruh area sekolah setiap hari Jumat?", img: null }
+        ];
+        let selectedKasusIndex = 0; let isSpinningWheel = false;
+        let mediaStream = null; let mediaRecorder = null; let recordedChunks = [];
+        let recordTimerInterval = null; let recordTimeLeft = 60;
+        let currentRecordingTeamId = null; let currentRubricTeamId = null;
+
+        const teamConfigs = [
+            { id: 1, name: "TIM 1", style: "panel-red", btnColors: "bg-[#fb7185] hover:bg-[#f43f5e] text-white" },
+            { id: 2, name: "TIM 2", style: "panel-blue", btnColors: "bg-[#60a5fa] hover:bg-[#3b82f6] text-white" },
+            { id: 3, name: "TIM 3", style: "panel-yellow", btnColors: "bg-[#facc15] hover:bg-[#eab308] text-black" },
+            { id: 4, name: "TIM 4", style: "panel-green", btnColors: "bg-[#34d399] hover:bg-[#10b981] text-white" },
+            { id: 5, name: "TIM 5", style: "panel-purple", btnColors: "bg-[#c084fc] hover:bg-[#a855f7] text-white" },
+            { id: 6, name: "TIM 6", style: "panel-cyan", btnColors: "bg-[#fb923c] hover:bg-[#f97316] text-white" } 
+        ];
+
+        let teams = []; let globalTimer = 600; let timerInterval; let currentPhase = 1;
+
+        function renderKasusInputs() {
+            const container = document.getElementById('kasus-inputs-container'); container.innerHTML = '';
+            bankKasusFase3.forEach((kasus, idx) => {
+                const box = document.createElement('div');
+                box.className = "bg-black/30 p-2.5 rounded-lg border border-white/10 space-y-2";
+                box.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-white/10 pb-1">
+                        <span class="font-bold text-amber-400 text-xs uppercase">📌 Kasus #${idx + 1}</span>
+                        <select id="kasus-mode-${idx}" class="bg-slate-800 text-white text-[10px] border border-amber-500 rounded px-1.5 py-0.5 font-bold">
+                            <option value="text" ${kasus.displayMode === 'text' ? 'selected' : ''}>📝 Teks</option>
+                            <option value="image" ${kasus.displayMode === 'image' ? 'selected' : ''}>🖼️ Gambar</option>
+                        </select>
+                    </div>
+                    <div id="kasus-text-box-${idx}" class="${kasus.displayMode === 'text' ? '' : 'hidden'}">
+                        <textarea id="input-kasus-text-${idx}" rows="2" class="w-full p-1.5 rounded bg-slate-800 border border-slate-600 text-white text-xs">${kasus.text}</textarea>
+                    </div>
+                    <div id="kasus-img-box-${idx}" class="${kasus.displayMode === 'image' ? '' : 'hidden'}">
+                        <input type="file" id="upload-kasus-img-${idx}" accept="image/*" class="w-full text-[10px] text-slate-300 bg-slate-800 rounded p-1">
+                    </div>
+                `;
+                container.appendChild(box);
+                box.querySelector(`#kasus-mode-${idx}`).addEventListener('change', e => {
+                    bankKasusFase3[idx].displayMode = e.target.value;
+                    document.getElementById(`kasus-text-box-${idx}`).classList.toggle('hidden', e.target.value !== 'text');
+                    document.getElementById(`kasus-img-box-${idx}`).classList.toggle('hidden', e.target.value !== 'image');
+                });
+                box.querySelector(`#upload-kasus-img-${idx}`).addEventListener('change', e => {
+                    const file = e.target.files[0]; if(file) bankKasusFase3[idx].img = URL.createObjectURL(file);
+                });
+            });
+        }
+        renderKasusInputs();
+
+        document.getElementById('upload-mp3-fase1').addEventListener('change', e => { if(e.target.files[0]) customMp3AudioFase1 = new Audio(URL.createObjectURL(e.target.files[0])); });
+        document.getElementById('upload-video-fase2').addEventListener('change', e => { if(e.target.files[0]) customVideoFileFase2 = URL.createObjectURL(e.target.files[0]); });
+
+        document.addEventListener('pointerdown', function(e) {
+            initAudio(); const target = e.target.closest('[data-action]'); if (!target) return;
+            const action = target.dataset.action;
+
+            if (action === 'scroll-up' || action === 'scroll-down') {
+                e.preventDefault(); e.stopPropagation(); const container = document.getElementById(target.dataset.target);
+                if (container) container.scrollTop += (action === 'scroll-up' ? -35 : 35); return;
+            }
+            e.preventDefault();
+            if (action === 'skip-intro') {
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                document.getElementById('intro-screen').classList.add('hidden'); document.getElementById('main-menu').classList.remove('hidden');
+            }
+            else if (action === 'go-home') location.reload();
+            else if (action === 'open-teacher') document.getElementById('teacher-modal').classList.remove('hidden');
+            else if (action === 'close-teacher' || action === 'save-teacher') { parseTeacherQuestions(); document.getElementById('teacher-modal').classList.add('hidden'); }
+            else if (action === 'start-game') { parseTeacherQuestions(); startGame(target.dataset.mode, parseInt(target.dataset.count)); }
+            else if (action === 'play-phase-audio') playTTS(document.getElementById(`audio-fase-${currentPhase}`).value);
+            else if (action === 'play-custom-mp3') {
+                if(customMp3AudioFase1) { customMp3AudioFase1.currentTime = 0; customMp3AudioFase1.play(); } else alert("Guru belum mengunggah file MP3!");
+            }
+            else if (action === 'open-q1') openQuestion(1, parseInt(target.dataset.team), parseInt(target.dataset.qidx));
+            else if (action === 'answer1') handleAnswer(1, parseInt(target.dataset.team), parseInt(target.dataset.qidx), target.dataset.ans);
+            else if (action === 'open-q2') openQuestion(2, parseInt(target.dataset.team), parseInt(target.dataset.qidx));
+            else if (action === 'answer2') handleAnswer(2, parseInt(target.dataset.team), parseInt(target.dataset.qidx), target.dataset.ans);
+            else if (action === 'show-interim') showInterimScore();
+            else if (action === 'start-next-phase') startNextPhase(); 
+            else if (action === 'show-final-score') showFinalScore();
+            else if (action === 'spin-wheel') spinKasusWheel();
+            else if (action === 'zoom-kasus-img') {
+                const k = bankKasusFase3[selectedKasusIndex];
+                if (k && k.img) { document.getElementById('zoomed-kasus-img').src = k.img; document.getElementById('zoom-img-modal').classList.remove('hidden'); }
+            }
+            else if (action === 'close-zoom-img') document.getElementById('zoom-img-modal').classList.add('hidden');
+            else if (action === 'open-record') openRecordModal(parseInt(target.dataset.team));
+            else if (action === 'start-recording') startRecordingSequence();
+            else if (action === 'close-record') closeRecordModal();
+            else if (action === 'open-playback') openPlaybackModal(parseInt(target.dataset.team));
+            else if (action === 'close-playback') closePlaybackModal();
+            else if (action === 'open-rubric') openRubricModal(parseInt(target.dataset.team));
+            else if (action === 'close-rubric') document.getElementById('rubric-modal').classList.add('hidden');
+            else if (action === 'save-rubric') saveRubricScore();
+            else if (action === 'show-story') {
+                document.getElementById('story-content').innerText = document.getElementById('cerita-fase-2').value; document.getElementById('story-modal').classList.remove('hidden');
+            }
+            else if (action === 'close-story') document.getElementById('story-modal').classList.add('hidden');
+            else if (action === 'show-video') {
+                const ytLink = document.getElementById('youtube-link-fase2').value; const vidC = document.getElementById('video-content'); vidC.innerHTML = '';
+                if (customVideoFileFase2) vidC.innerHTML = `<video src="${customVideoFileFase2}" controls autoplay class="w-full h-full object-contain"></video>`;
+                else if (ytLink) {
+                    let ytId = ytLink.includes("v=") ? ytLink.split("v=")[1].substring(0, 11) : (ytLink.includes("youtu.be/") ? ytLink.split("youtu.be/")[1].substring(0, 11) : "");
+                    if (ytId) vidC.innerHTML = `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen class="w-full h-full"></iframe>`;
+                }
+                document.getElementById('video-modal').classList.remove('hidden');
+            }
+            else if (action === 'close-video') { document.getElementById('video-content').innerHTML = ''; document.getElementById('video-modal').classList.add('hidden'); }
+        }, { passive: false });
+
+        function shuffleArray(arr) { let a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+        function parseTeacherQuestions() {
+            const r1 = document.getElementById('input-soal-fase1').value.split('\n');
+            bankSoalFase1 = r1.filter(l=>l.trim()).map(l=>{let p=l.split('='); return {q:p[0].trim(), ans:p[1].trim().toLowerCase().includes('fakta')?'Fakta':'Opini'}});
+            while(bankSoalFase1.length<10) bankSoalFase1=bankSoalFase1.concat([...bankSoalFase1]); bankSoalFase1=bankSoalFase1.slice(0,10);
+            
+            const r2 = document.getElementById('input-soal-fase2').value.split('\n');
+            bankSoalFase2 = r2.filter(l=>l.trim()).map(l=>{let p=l.split('='); return {q:p[0].trim(), opts:p[1].split('|').map(o=>o.trim()), ans:p[2]?p[2].trim():''}});
+            while(bankSoalFase2.length<10) bankSoalFase2=bankSoalFase2.concat([...bankSoalFase2]); bankSoalFase2=bankSoalFase2.slice(0,10);
+        }
+
+        function startGame(mode, count) {
+            teams = [];
+            const createTeam = (config) => ({ ...config, score: 0, qStatus1: Array(10).fill(0), activeQ1: null, questions1: shuffleArray(bankSoalFase1), qStatus2: Array(10).fill(0), activeQ2: null, questions2: shuffleArray(bankSoalFase2).map(q => ({ ...q, opts: shuffleArray([...q.opts]) })), videoBlobUrl: null, rubric: { pendapat: 0, alasan: 0, data: 0, kesimpulan: 0 } });
+            const grid = document.getElementById('game-grid');
+
+            if (mode === 'solo') {
+                teams.push(createTeam({ id: 1, name: "PEMAIN MANDIRI", style: "panel-solo", btnColors: "bg-slate-300 hover:bg-slate-200 text-slate-900" }));
+                grid.className = "flex-1 min-h-0 h-full grid grid-cols-1 max-w-2xl mx-auto p-1 box-border";
+            } else {
+                for (let i = 0; i < count; i++) teams.push(createTeam(teamConfigs[i]));
+                grid.className = `flex-1 min-h-0 h-full grid ${count===4 ? 'grid-cols-2 grid-rows-2' : 'grid-cols-3 grid-rows-2'} gap-2 p-1 box-border`;
+            }
+
+            currentPhase = 1; document.getElementById('main-menu').classList.add('hidden'); document.getElementById('game-screen').classList.remove('hidden');
+            const btnNext = document.getElementById('btn-next-phase'); btnNext.innerText = "Lanjut Fase 2 ➡️"; btnNext.dataset.action = "show-interim";
+            setTimeout(() => playTTS(document.getElementById('audio-fase-1').value), 500);
+            resetTimer(); renderAllPanels();
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval); globalTimer = 600; document.getElementById('global-timer').innerText = "10:00";
+            timerInterval = setInterval(() => {
+                globalTimer--; document.getElementById('global-timer').innerText = `${Math.floor(globalTimer/60).toString().padStart(2,'0')}:${(globalTimer%60).toString().padStart(2,'0')}`;
+                if(globalTimer<=0) clearInterval(timerInterval);
+            }, 1000);
+        }
+
+        function renderAllPanels() {
+            const grid = document.getElementById('game-grid');
+            if (currentPhase === 3) { renderFase3Layout(); return; }
+            grid.innerHTML = '';
+            teams.forEach(team => {
+                const panel = document.createElement('div');
+                panel.className = `${team.style} rounded border-2 shadow flex flex-col p-2 overflow-hidden h-full min-h-0 relative transform rotate-[${(Math.random()-0.5)*2}deg]`;
+                const pin = `<div class="w-2.5 h-2.5 rounded-full bg-slate-400 absolute top-2 left-1/2 -translate-x-1/2 shadow-inner z-20 opacity-80"></div>`;
+                let html = `${pin}<div class="shrink-0 flex items-center justify-center font-black text-sm mb-1 pb-1 uppercase mt-1">👥 ${team.name}</div><div class="flex-1 min-h-0 flex flex-col justify-between overflow-hidden relative w-full my-0.5">`;
+
+                if (currentPhase === 1) {
+                    if (team.activeQ1 !== null) {
+                        const q = team.questions1[team.activeQ1].q;
+                        html += `<div class="relative flex-1 bg-white/50 rounded p-2 mb-1 border border-black/10 flex items-center justify-between overflow-hidden">
+                                    <div id="q1-box-${team.id}" class="flex-1 h-full overflow-y-auto custom-scroll text-center pr-1 flex items-center justify-center">
+                                        <p class="font-bold text-xs md:text-sm">${q}</p>
+                                    </div>
+                                </div>
+                                <div class="shrink-0 grid grid-cols-2 gap-2 h-10 md:h-12">
+                                    <button data-action="answer1" data-team="${team.id}" data-qidx="${team.activeQ1}" data-ans="Fakta" class="touch-btn bg-slate-800 hover:bg-slate-700 rounded text-white font-bold text-sm shadow">FAKTA</button>
+                                    <button data-action="answer1" data-team="${team.id}" data-qidx="${team.activeQ1}" data-ans="Opini" class="touch-btn bg-slate-600 hover:bg-slate-500 rounded text-white font-bold text-sm shadow">OPINI</button>
+                                </div>`;
+                    } else {
+                        html += `<div class="h-full grid grid-cols-5 grid-rows-2 gap-1.5 flex-1 min-h-0">`;
+                        for(let i=0; i<10; i++) {
+                            let stat = team.qStatus1[i];
+                            html += `<button data-action="open-q1" data-team="${team.id}" data-qidx="${i}" class="number-btn touch-btn ${team.btnColors} ${stat===1?'solved-correct':(stat===-1?'solved-wrong':'')} flex items-center justify-center font-bold text-lg md:text-2xl w-full h-full">${stat===0 ? i+1 : '🔒'}</button>`;
+                        }
+                        html += `</div>`;
+                    }
+                } else if (currentPhase === 2) {
+                    if (team.activeQ2 !== null) {
+                        const q = team.questions2[team.activeQ2];
+                        html += `<div class="relative max-h-[40%] min-h-[40px] bg-white/50 rounded p-1 mb-1 border border-black/10 flex items-center overflow-hidden">
+                                    <div id="q2-box-${team.id}" class="flex-1 h-full overflow-y-auto custom-scroll text-center px-1 flex items-center justify-center">
+                                        <p class="font-bold text-[10px] md:text-xs">${q.q}</p>
+                                    </div>
+                                </div>
+                                <div class="flex-1 grid grid-cols-2 grid-rows-2 gap-1.5">
+                                    ${q.opts.map((opt, i) => `<div class="bg-slate-800 hover:bg-slate-700 text-white rounded text-[9px] md:text-[10px] font-semibold flex items-center p-1 cursor-pointer overflow-hidden shadow touch-btn" data-action="answer2" data-team="${team.id}" data-qidx="${team.activeQ2}" data-ans="${opt}">
+                                            <div class="w-full text-center max-h-full overflow-y-auto custom-scroll px-1">${opt}</div>
+                                        </div>`).join('')}
+                                </div>`;
+                    } else {
+                        html += `<div class="h-full grid grid-cols-5 grid-rows-2 gap-1.5 flex-1 min-h-0">`;
+                        for(let i=0; i<10; i++) {
+                            let stat = team.qStatus2[i];
+                            html += `<button data-action="open-q2" data-team="${team.id}" data-qidx="${i}" class="number-btn touch-btn ${team.btnColors} ${stat===1?'solved-correct':(stat===-1?'solved-wrong':'')} flex items-center justify-center font-bold text-lg md:text-2xl w-full h-full">${stat===0 ? i+1 : '🔒'}</button>`;
+                        }
+                        html += `</div>`;
+                    }
+                }
+
+                html += `</div><div class="shrink-0 mt-1 flex justify-center items-center bg-black/5 rounded px-2 py-0.5 border border-black/10"><span class="font-bold text-xs">⭐ Skor: <span class="text-sm font-black">${team.score}</span></span></div>`;
+                panel.innerHTML = html; grid.appendChild(panel);
+            });
+        }
+
+        function renderFase3Layout() {
+            const grid = document.getElementById('game-grid');
+            grid.className = "flex-1 min-h-0 h-full flex flex-col md:flex-row gap-3 p-1 box-border overflow-hidden";
+            const k = bankKasusFase3[selectedKasusIndex];
+            
+            let html = `
+                <div class="flex-1 bg-white border border-slate-300 rounded shadow-md p-3 flex flex-col justify-between items-center relative overflow-hidden transform -rotate-1">
+                    <div class="w-3 h-3 rounded-full bg-blue-600 absolute top-2 left-1/2 -translate-x-1/2 shadow-inner"></div>
+                    <div class="w-full text-center border-b-2 border-slate-200 pb-2 mt-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-widest font-handwriting">Papan Undian</span>
+                        <h3 class="text-xl md:text-2xl font-black text-slate-800">${k.title}</h3>
+                    </div>
+                    <div class="flex-1 w-full my-2 bg-slate-50 rounded border border-slate-200 p-2 flex items-center justify-center overflow-y-auto custom-scroll text-slate-800 font-bold text-center">
+                        ${k.displayMode==='image' && k.img ? `<div class="cursor-pointer" data-action="zoom-kasus-img"><img src="${k.img}" class="max-h-[75%] rounded border shadow"><p class="text-[10px] mt-1 text-blue-600">Klik perbesar</p></div>` : k.text}
+                    </div>
+                    <div class="w-full space-y-2">
+                        <button data-action="spin-wheel" id="btn-spin-wheel" class="touch-btn w-full py-2 bg-amber-400 font-black text-sm rounded shadow border border-amber-600 flex justify-center gap-2">🎲 PUTAR UNDIAN 🎲</button>
+                        <button data-action="show-final-score" class="touch-btn w-full py-2 bg-emerald-600 text-white font-bold text-xs rounded shadow border border-emerald-800">🏆 SELESAIKAN GAME</button>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-1/2 flex flex-col gap-2 overflow-y-auto custom-scroll pr-1">
+                    <div class="text-center bg-black/20 rounded py-1 px-3"><span class="text-xs font-bold text-white font-handwriting">Penilaian Tim Detektif</span></div>
+                    <div class="grid grid-cols-2 gap-2 flex-1">
+                        ${teams.map(team => `
+                            <div class="${team.style} rounded border shadow flex flex-col justify-between p-2 relative">
+                                <div class="w-2 h-2 rounded-full bg-slate-400 absolute top-1 left-1/2 -translate-x-1/2"></div>
+                                <div class="font-bold text-xs text-center border-b border-black/10 pb-1 mt-1">${team.name}</div>
+                                <div class="my-1 text-center"><span class="text-xl font-black drop-shadow-sm">${team.score}</span><span class="text-[9px]"> pt</span></div>
+                                <div class="space-y-1">
+                                    <div class="flex gap-1">
+                                        <button data-action="open-record" data-team="${team.id}" class="touch-btn flex-1 bg-red-500 text-white font-bold text-[9px] py-1 rounded shadow">🎥 Rekam</button>
+                                        ${team.videoBlobUrl ? `<button data-action="open-playback" data-team="${team.id}" class="touch-btn bg-blue-500 text-white font-bold text-[9px] px-2 py-1 rounded shadow">▶️</button>` : ''}
+                                    </div>
+                                    <button data-action="open-rubric" data-team="${team.id}" class="touch-btn w-full bg-slate-800 text-white font-bold text-[9px] py-1.5 rounded shadow">📝 Nilai Argumen</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            grid.innerHTML = html;
+        }
+
+        function openQuestion(phase, teamId, qIndex) {
+            const team = teams.find(t => t.id === teamId);
+            if (phase === 1 && team.qStatus1[qIndex] === 0) team.activeQ1 = qIndex;
+            else if (phase === 2 && team.qStatus2[qIndex] === 0) team.activeQ2 = qIndex;
+            updatePanel(teamId);
+        }
+
+        function handleAnswer(phase, teamId, qIndex, answer) {
+            const team = teams.find(t => t.id === teamId);
+            let isCorrect = (phase===1) ? (team.questions1[qIndex].ans.toLowerCase()===answer.toLowerCase()) : (team.questions2[qIndex].ans===answer);
+            if(isCorrect) { team.score+=10; if(phase===1) team.qStatus1[qIndex]=1; else team.qStatus2[qIndex]=1; playSound('correct'); }
+            else { team.score-=5; if(phase===1) team.qStatus1[qIndex]=-1; else team.qStatus2[qIndex]=-1; playSound('wrong'); }
+            if(phase===1) team.activeQ1=null; else team.activeQ2=null;
+            updatePanel(teamId);
+        }
+        function updatePanel(teamId) { renderAllPanels(); }
+
+        function spinKasusWheel() {
+            if(isSpinningWheel) return; isSpinningWheel=true; document.getElementById('btn-spin-wheel').disabled = true;
+            let ticks=0, total=(bankKasusFase3.length*4)+Math.floor(Math.random()*bankKasusFase3.length);
+            const spinInt = setInterval(() => {
+                playSound('tick'); selectedKasusIndex=(selectedKasusIndex+1)%bankKasusFase3.length; renderFase3Layout();
+                if(++ticks>=total) { clearInterval(spinInt); isSpinningWheel=false; playSound('correct'); setTimeout(()=>playTTS("Kasus terpilih, "+bankKasusFase3[selectedKasusIndex].title),400); }
+            }, 100);
+        }
+
+        function getSupportedMimeType() {
+            const types = ['video/webm;codecs=vp9,opus','video/webm','video/mp4;codecs=avc1,mp4a','video/mp4'];
+            for (let t of types) if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t;
+            return '';
+        }
+
+        // FUNGSI KAMERA: diagnosis konteks aman, izin, dan dukungan perangkat
+        async function openRecordModal(id) {
+            currentRecordingTeamId = id;
+            const team = teams.find(t => t.id === id);
+            if (!team) return;
+
+            document.getElementById('record-team-title').innerText = `🎥 REKAM ${team.name}`;
+            document.getElementById('record-timer-display').innerText = "01:00";
+            document.getElementById('btn-start-record').classList.remove('hidden');
+            document.getElementById('btn-start-record').disabled = false;
+            document.getElementById('btn-start-record').innerText = "🔴 MULAI REKAM (60 DETIK)";
+            document.getElementById('recording-badge').classList.add('hidden');
+            document.getElementById('local-file-warning').classList.add('hidden');
+            document.getElementById('record-modal').classList.remove('hidden');
+
+            // Hentikan stream sebelumnya agar kamera tidak terkunci.
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+
+            const warning = document.getElementById('local-file-warning');
+            const preview = document.getElementById('camera-preview');
+
+            // Kamera web hanya tersedia pada secure context (HTTPS/localhost).
+            if (!window.isSecureContext || !navigator.mediaDevices ||
+                typeof navigator.mediaDevices.getUserMedia !== 'function') {
+                warning.classList.remove('hidden');
+                warning.innerText = '⚠️ Kamera tidak dapat diakses dari alamat ini. File HTML yang dibuka melalui WhatsApp/content:// atau file:// tidak mendukung akses kamera. Jalankan file melalui hosting HTTPS, lalu buka URL HTTPS langsung di browser.';
+                alert('Kamera tidak dapat diakses dari lokasi file saat ini.\\n\\nSolusi: unggah file HTML ke hosting HTTPS, lalu buka alamat HTTPS langsung di Brave/Chrome. Jangan buka dari pratinjau WhatsApp atau file manager.');
+                document.getElementById('record-modal').classList.add('hidden');
+                return;
+            }
+
+            if (!navigator.mediaDevices.enumerateDevices) {
+                // getUserMedia tetap bisa dicoba meskipun enumerateDevices tidak tersedia.
+            }
+
+            try {
+                // Coba kamera + mikrofon terlebih dahulu.
+                try {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: { ideal: 'user' }, width: { ideal: 1280 } },
+                        audio: true
+                    });
+                } catch (audioError) {
+                    // Jangan mengulang permintaan jika pengguna menolak izin kamera.
+                    if (audioError.name === 'NotAllowedError' ||
+                        audioError.name === 'SecurityError' ||
+                        audioError.name === 'NotFoundError' ||
+                        audioError.name === 'NotReadableError') {
+                        throw audioError;
+                    }
+                    // Jika mikrofon tidak tersedia/ditolak, coba video saja.
+                    mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: { ideal: 'user' }, width: { ideal: 1280 } },
+                        audio: false
+                    });
+                }
+
+                preview.srcObject = mediaStream;
+                try { await preview.play(); } catch (_) { /* autoplay dapat dibatasi browser */ }
+            } catch (e) {
+                let reason = e.message || 'Kesalahan tidak diketahui.';
+                if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+                    reason = 'Izin kamera/mikrofon ditolak. Izinkan Kamera pada Setelan Android > Aplikasi > Brave > Izin aplikasi, lalu izinkan kamera untuk situs tersebut di pengaturan Brave.';
+                } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
+                    reason = 'Kamera atau mikrofon tidak ditemukan pada perangkat.';
+                } else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {
+                    reason = 'Kamera sedang digunakan aplikasi lain atau tidak dapat dibuka. Tutup aplikasi kamera/video lain lalu coba lagi.';
+                } else if (e.name === 'OverconstrainedError') {
+                    reason = 'Kamera tidak mendukung pengaturan video yang diminta. Coba lagi dengan kamera standar.';
+                } else if (e.name === 'SecurityError') {
+                    reason = 'Browser menolak akses kamera karena alasan keamanan. Buka proyek melalui URL HTTPS.';
+                }
+                alert('Akses kamera gagal.\\n\\n' + reason + '\\n\\nAlamat halaman: ' + window.location.href);
+                closeRecordModal();
+            }
+        }
+
+        function startRecordingSequence() {
+            if(!mediaStream) return; let btn=document.getElementById('btn-start-record'); btn.disabled=true; let count=3; playSound('beep'); btn.innerText=`⏳ SIAP-SIAP: ${count}...`;
+            let timer = setInterval(()=> {
+                count--; if(count>0) { playSound('beep'); btn.innerText=`⏳ SIAP-SIAP: ${count}...`; }
+                else { clearInterval(timer); playSound('correct'); btn.classList.add('hidden'); btn.disabled=false; executeRecording(); }
+            }, 1000);
+        }
+
+        function executeRecording() {
+            if (!mediaStream || !window.MediaRecorder) {
+                alert('Perekaman video tidak didukung oleh browser ini. Coba gunakan Chrome atau Brave versi terbaru.');
+                closeRecordModal();
+                return;
+            }
+            recordedChunks=[];
+            const supportedType = getSupportedMimeType();
+            try {
+                mediaRecorder = new MediaRecorder(mediaStream, supportedType ? {mimeType:supportedType} : {});
+            } catch (err) {
+                alert('Browser tidak dapat memulai perekaman video: ' + (err.message || err));
+                closeRecordModal();
+                return;
+            }
+            mediaRecorder.ondataavailable = e => { if(e.data && e.data.size>0) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = () => {
+                const team = teams.find(t=>t.id===currentRecordingTeamId);
+                if(team) { team.videoBlobUrl = URL.createObjectURL(new Blob(recordedChunks, {type:mediaRecorder.mimeType||'video/webm'})); team.videoMimeType = mediaRecorder.mimeType; }
+                closeRecordModal(); renderFase3Layout();
+            };
+            mediaRecorder.start(200); document.getElementById('recording-badge').classList.remove('hidden');
+            recordTimeLeft=60;
+            recordTimerInterval = setInterval(()=> {
+                recordTimeLeft--; document.getElementById('record-timer-display').innerText=`00:${recordTimeLeft.toString().padStart(2,'0')}`;
+                if(recordTimeLeft<=0) { clearInterval(recordTimerInterval); if(mediaRecorder.state!=='inactive') mediaRecorder.stop(); }
+            }, 1000);
+        }
+
+        function closeRecordModal() {
+            clearInterval(recordTimerInterval); if(mediaRecorder && mediaRecorder.state!=='inactive') mediaRecorder.stop();
+            if(mediaStream) mediaStream.getTracks().forEach(t=>t.stop());
+            document.getElementById('record-modal').classList.add('hidden');
+        }
+
+        function openPlaybackModal(id) {
+            const team = teams.find(t=>t.id===id);
+            if(team && team.videoBlobUrl) {
+                document.getElementById('playback-team-title').innerText = `▶️ REKAMAN ${team.name}`;
+                const player = document.getElementById('playback-player'); player.src = team.videoBlobUrl;
+                document.getElementById('playback-modal').classList.remove('hidden');
+                setTimeout(()=>player.play(), 100);
+            }
+        }
+        function closePlaybackModal() { document.getElementById('playback-player').pause(); document.getElementById('playback-modal').classList.add('hidden'); }
+
+        function openRubricModal(id) {
+            currentRubricTeamId = id; const team = teams.find(t=>t.id===id); if(!team) return;
+            document.getElementById('score-pendapat').value=team.rubric.pendapat||0; document.getElementById('score-alasan').value=team.rubric.alasan||0;
+            document.getElementById('score-data').value=team.rubric.data||0; document.getElementById('score-kesimpulan').value=team.rubric.kesimpulan||0;
+            document.getElementById('rubric-modal').classList.remove('hidden');
+        }
+        function saveRubricScore() {
+            const team = teams.find(t=>t.id===currentRubricTeamId);
+            if(team) {
+                const p = parseInt(document.getElementById('score-pendapat').value)||0; const a = parseInt(document.getElementById('score-alasan').value)||0;
+                const d = parseInt(document.getElementById('score-data').value)||0; const k = parseInt(document.getElementById('score-kesimpulan').value)||0;
+                team.rubric = { pendapat:p, alasan:a, data:d, kesimpulan:k }; team.score = p+a+d+k;
+                playSound('correct'); document.getElementById('rubric-modal').classList.add('hidden'); renderFase3Layout();
+            }
+        }
+
+        function showInterimScore() {
+            if(customMp3AudioFase1) customMp3AudioFase1.pause(); document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('interim-score-screen').classList.remove('hidden');
+            document.getElementById('btn-start-next-phase').innerText = currentPhase===1 ? "Mulai Fase 2: Membaca" : "Mulai Fase 3: Argumen";
+            const board = document.getElementById('interim-leaderboard'); board.innerHTML='';
+            [...teams].sort((a,b)=>b.score-a.score).forEach((t,i) => {
+                board.innerHTML += `<div class="bg-white/10 backdrop-blur rounded-xl p-4 border-2 border-amber-400 shadow flex items-center justify-between"><div class="flex items-center gap-3"><span class="text-3xl">${i===0?'🥇':(i===1?'🥈':(i===2?'🥉':`#${i+1}`))}</span><h3 class="text-lg font-bold text-white uppercase">${t.name}</h3></div><div class="bg-black/40 px-4 py-1 rounded border border-white/20"><span class="text-2xl font-black text-amber-300">${t.score}</span></div></div>`;
+            });
+        }
+
+        function showFinalScore() {
+            document.getElementById('game-screen').classList.add('hidden'); document.getElementById('interim-score-screen').classList.add('hidden');
+            document.getElementById('final-score-screen').classList.remove('hidden');
+            playSound('correct'); playTTS("Penyelidikan selesai! Selamat kepada tim detektif terbaik.");
+            const board = document.getElementById('final-leaderboard'); const tbody = document.getElementById('final-summary-table-body');
+            board.innerHTML=''; tbody.innerHTML='';
+            [...teams].sort((a,b)=>b.score-a.score).forEach((t,i) => {
+                let badge = i===0 ? 'bg-amber-400 text-black' : (i===1 ? 'bg-slate-300 text-black' : (i===2 ? 'bg-amber-700 text-white' : 'bg-slate-800 text-slate-300'));
+                board.innerHTML += `<div class="bg-white/10 backdrop-blur rounded-2xl p-4 border border-white/20 shadow-lg text-center transform hover:scale-105 transition-all"><span class="px-3 py-1 rounded-full font-bold text-[10px] uppercase ${badge}">Peringkat ${i+1}</span><h3 class="text-xl font-black text-white mt-2">${t.name}</h3><div class="text-3xl font-black text-amber-300 mt-2">${t.score} <span class="text-xs text-white/50">pt</span></div></div>`;
+                tbody.innerHTML += `<tr class="border-b border-white/10"><td class="p-2 font-bold text-amber-400">#${i+1}</td><td class="p-2 font-bold text-white">${t.name}</td><td class="p-2 font-black text-amber-300">${t.score}</td></tr>`;
+            });
+        }
+
+        function startNextPhase() {
+            document.getElementById('interim-score-screen').classList.add('hidden'); document.getElementById('game-screen').classList.remove('hidden');
+            if (currentPhase === 1) {
+                currentPhase = 2; document.getElementById('phase-title').innerText = "FASE 2: MEMBACA & MEMIRSA INFORMASI";
+                document.getElementById('btn-simak-audio').classList.add('hidden'); document.getElementById('btn-show-story').classList.remove('hidden'); document.getElementById('btn-show-video').classList.remove('hidden'); 
+                document.getElementById('btn-next-phase').innerText = "Lanjut Fase 3 ➡️"; document.getElementById('btn-next-phase').dataset.action = "show-interim";
+                resetTimer(); renderAllPanels(); setTimeout(()=>playTTS(document.getElementById('audio-fase-2').value), 500);
+            } 
+            else if (currentPhase === 2) {
+                currentPhase = 3; document.getElementById('phase-title').innerText = "FASE 3: MENYAMPAIKAN ARGUMENTASI";
+                document.getElementById('btn-show-story').classList.add('hidden'); document.getElementById('btn-show-video').classList.add('hidden');
+                document.getElementById('btn-next-phase').innerText = "🏆 Selesai"; document.getElementById('btn-next-phase').dataset.action = "show-final-score";
+                resetTimer(); renderAllPanels(); setTimeout(()=>playTTS(document.getElementById('audio-fase-3').value), 500);
+            }
+        }
+    </script>
+</body>
+</html>
